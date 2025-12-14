@@ -1,6 +1,6 @@
 #Bibliotecas necessárias
 import os
-from telegram import Update
+from telegram import Update # Execute "pip install python-telegram-bot" para intalar esta biblioteca
 from telegram.ext import (Application, CommandHandler, MessageHandler, ContextTypes, filters)
     
 #Classe mãe com o bot
