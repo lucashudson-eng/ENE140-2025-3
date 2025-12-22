@@ -2,26 +2,41 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 bot = telebot.TeleBot('8235945672:AAEvnPJIiQO5zDzxsbUQ5--9rOUIBNAg7Ko')
-@bot.message_handler(commands=['start', 'help'])
-def start(msg):
-    # Criando o teclado de opções
-    markup = InlineKeyboardMarkup()
+class BotTelegram:
+    def __init__(self, token):
+        # Inicializa o bot com o token fornecido
+        self.bot = telebot.TeleBot(token)
+        self.configurar_handlers()
 
-    # Criando os botões (text = o que aparece, callback_data = o "comando" secreto que o bot recebe)
-    btn_audio = InlineKeyboardButton(
-        text="🎙️ Transcrever Áudio", callback_data="opcao_audio")
-    btn_imagem = InlineKeyboardButton(
-        text="🖼️ Identificar Objeto", callback_data="opcao_imagem")
+    def criar_menu(self):
+        # Cria o teclado de opções (Interface)
+        markup = InlineKeyboardMarkup()
+        btn_audio = InlineKeyboardButton(text="🎙️ Transcrever Áudio", callback_data="opcao_audio")
+        btn_imagem = InlineKeyboardButton(text="🖼️ Identificar Objeto", callback_data="opcao_imagem")
+        markup.add(btn_audio, btn_imagem)
+        return markup
 
-    # Adicionando os botões ao teclado
-    markup.add(btn_audio, btn_imagem)
+    def configurar_handlers(self):
+        # Gerencia os comandos e mensagens
+        
+        @self.bot.message_handler(commands=['start', 'help'])
+        def send_welcome(msg):
+            self.bot.reply_to(msg, "Olá! O que você gostaria de fazer hoje?", 
+                             reply_markup=self.criar_menu())
 
-    bot.reply_to(msg, "Olá! O que você gostaria de fazer hoje?",
-                 reply_markup=markup)
-@bot.callback_query_handler(func=lambda call: True)
-def callback_reposta(call):
-    if call.data == "opcao_audio":
-        bot.send_message(call.message.chat.id, "Perfeito! Me envie um áudio ou mensagem de voz para que eu possa transcrever.")
-    
-    elif call.data == "opcao_imagem":
-        bot.send_message(call.message.chat.id, "Ótimo! Envie uma foto e eu direi o que estou vendo.")
+        @self.bot.callback_query_handler(func=lambda call: True)
+        def callback_reposta(call):
+            if call.data == "opcao_audio":
+                self.bot.send_message(call.message.chat.id, "Perfeito! Me envie um áudio.")
+            elif call.data == "opcao_imagem":
+                self.bot.send_message(call.message.chat.id, "Ótimo! Envie uma foto.")
+
+    def iniciar(self):
+        print("Bot rodando dentro da classe...")
+        self.bot.polling()
+
+# --- Execução do Código ---
+if __name__ == "__main__":
+    TOKEN = '8235945672:AAEvnPJIiQO5zDzxsbUQ5--9rOUIBNAg7Ko'
+    meu_bot = BotTelegram(TOKEN)
+    meu_bot.iniciar()
