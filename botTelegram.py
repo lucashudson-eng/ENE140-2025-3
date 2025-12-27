@@ -1,4 +1,4 @@
-from telegram.ext import ApplicationBuilder
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import zipfile
 import requests
 import cv2
@@ -8,18 +8,56 @@ import random
 import os
 import time
 from ultralytics import YOLO
+from telegram import Update
 
 class BotTelegram:
-    def __init__(self, token, mensagem):
+    def __init__(self, token):
         self.__token = token
-        self.mensagem = mensagem
+        self.app = Application.builder().token(token).build()
+            #commands
+        self.app.add_handler(CommandHandler('start', self.start_command))
+        self.app.add_handler(CommandHandler('help', self.help_command))
 
-    token = '7812768588:AAFyWirqLGt_B-cdMip7sWMp8n_bVBYvzyo'
+            #messages
+        self.app.add_handler(MessageHandler(filters.TEXT, self.handle_message))
+        
+            #deal with errors
+        self.app.add_error_handler(self.error)
 
-    builder = ApplicationBuilder().token(token).build()
+            #imagem e audio
+        self.app.add_handler(MessageHandler(filters.PHOTO, self.router_imagem))
+        self.app.add_handler(MessageHandler(filters.VOICE, self.router_audio))
+
+    #comandos
+    async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await update.message.reply_text("bot iniciado")
+
+    async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await update.message.reply_text("envie uma imagem para que o bot descreva os objetos contidos nela ou um áudio para que o bot o transcreva em forma de texto")
     
-    #criar função de interpretação de mensagem, se é audio ou imagem
+    #se o usuário enviar uma mensagem
+    async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await update.message.reply_text("mensagens de texto não são compreendidas pelo bot. por favor envie apenas audios ou imagens")
+    
+    #em caso de erro
+    async def error(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        print(f'Update {update} caused error {context.error}')
 
+    #identificar se a mensagem é um áudio ou imagem
+    async def router_imagem(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        bot_imagem = BotImagem(update.message, self.model)
+
+    async def router_audio(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await update.message.reply_text("Áudio recebido! Processando...")
+
+    #iniciar leitura de mensgaens
+    def iniciar_bot(self):
+        self.app.run_polling(poll_interval=3)
+
+if __name__ == "__main__":
+    token = '8578762728:AAGHWPWoP9qlkCgY8BikH8kpvivhR9_CJlI'
+    bot = BotTelegram(token)
+    bot.iniciar_bot()
 
 class BotImagem(BotTelegram):
     def __init__(self, token, mensagem):
@@ -98,3 +136,5 @@ class BotAudio(BotTelegram):
         super().__init__(token, mensagem)
 
     #interpretar a mensagem como um audio
+
+
